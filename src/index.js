@@ -124,53 +124,108 @@ app.put("/orders/:id", (req, res) => {
   const idActualizar = parseInt(req.params.id);
   const { acciones } = req.body;
 
-  if (!acciones || !Array.isArray(acciones)) { // Si no acciones o acciones no es array
-    return res.status(400).json({
-      message: "Si no me dice bien que hacer entonces que hago ._."
-    });
-  }
-
-  const index = pedidos.findIndex(p => p.id === idActualizar); // La posición de ese pedido en el array 
-
-  if (index === -1) {
-    return res.status(404).json({
-      message: "Esa vuelta no existe"
-    });
-  }
-
-
-
-  let datosNuevos = [];
-  let totalNuevos = 0;
-
-  for (const accion of acciones) {
-
-    if (accion.nombre) {
-      pedidos[index].nombre = accion.nombre;
+  try {
+    
+    if (!acciones || !Array.isArray(acciones)) {
+      return res.status(400).json({
+        message: "Si no me dice bien qué hacer entonces qué hago ._."
+      });
     }
 
-    if (toLowerCase(accion.tipo) === "agregar") {
+    const index = pedidos.findIndex(p => p.id === idActualizar);
 
-      for (const p of accion.productos) {
+    if (index === -1) {
+      return res.status(404).json({
+        message: "Esa vuelta no existe"
+      });
+    }
 
-        let encontrado = productos.find(prod => prod.id === p);
+    let datosNuevos = [];
+    let totalNuevos = 0;
 
-        if (!encontrado) {
-          return res.status(404).json({
-            message: "otra vuelta que no existe"
-          });
-        }
+    for (const accion of acciones) {
 
-        datosNuevos.push(encontrado);
-        totalNuevos += Number(encontrado.precio);
+      // Cambiar nombre
+      if (accion.nombre) {
+        pedidos[index].nombre = accion.nombre;
       }
 
-      pedidos[index].productos.push(...datosNuevos);
-      pedidos[index].total += totalNuevos;
+      // Agregar productos
+      if (accion.tipo.toLowerCase() === "agregar") {
 
-    }
+        for (const p of accion.productos) {
+          let encontrado = productos.find(prod => prod.id === p);
 
+          if (!encontrado) {
+            return res.status(404).json({
+              message: "otra vuelta que no existe"
+            });
+          }
+
+          datosNuevos.push(encontrado);
+          totalNuevos += Number(encontrado.precio);
+        }
+
+        pedidos[index].productos.push(...datosNuevos);
+        pedidos[index].total += totalNuevos;
+
+        datosNuevos = [];
+        totalNuevos = 0;
+      }
+
+      // Eliminar productos
+      if (accion.tipo.toLowerCase() === "eliminar") {
+
+        for (const p of accion.productos) {
+
+          let encontrado = pedidos[index].productos.find(prod => prod.id === p);
+
+          if (!encontrado) {
+            return res.status(404).json({
+              message: "otra vuelta que no existe"
+            });
+          }
+
+          pedidos[index].total -= Number(encontrado.precio);
+          pedidos[index].productos = pedidos[index].productos.filter(prod => prod.id !== p);
+        }
+      }
+
+      // Reemplazar productos (sobreescribir)
+      if (accion.tipo.toLowerCase() === "reemplazar") {
+
+        for (const p of accion.productos) {
+          let encontrado = productos.find(prod => prod.id === p);
+
+          if (!encontrado) {
+            return res.status(404).json({
+              message: "esa vuelta que no existe"
+            });
+          }
+
+          datosNuevos.push(encontrado);
+          totalNuevos += Number(encontrado.precio);
+        }
+
+        pedidos[index].productos = datosNuevos;
+        pedidos[index].total = totalNuevos;
+
+        datosNuevos = [];
+        totalNuevos = 0;
+      }
+
+    } // fin for acciones
+
+    return res.json({
+      message: "Orden actualizada correctamente",
+      orden: pedidos[index]
+    });
+
+  } catch (error) {
+    console.error("Error actualizando orden :/ ", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
   }
+
 });
 
 
@@ -178,51 +233,6 @@ app.put("/orders/:id", (req, res) => {
 
 
 
-
-
-
-
-
-
-  //if ("id" in datosNuevos || "total" in datosNuevos){
-   // return res.status(400).json({
-     // message: "Jajaja pobre estupido"
-   // })
- // }
-
-
-   
-
-  if (isNaN(idActualizar) || index === -1){
-    return res.status(404).json({
-      massage: "Invalido manito"
-    })
-  }
-
-
-  if ("nombre" in datosNuevos){
-    pedidos[index].nombre = datosNuevos.nombre;
-  }
-
-
-  if ("productos" in datosNuevos){ 
-    
-    if ("agregar" in datosNuevos)
-
-    
-    let pedidoActualizar = pedidos[index]; // Utilizo el indice para obtener el pedido a actualizar
-    let nuevaOrden = pedidoActualizar.productos; // Productos deberia ser una lista de productos
-    let nuevoTotal = pedidoActualizar.total; 
-
-
-  
-  // Pensar en como sobreescribir con los datos nuevos
-
-}
-
-
-  
-  
 
 
 

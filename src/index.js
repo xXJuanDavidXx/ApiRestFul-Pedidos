@@ -203,11 +203,7 @@ app.put("/orders/:id", (req, res) => {
     for (const accion of acciones) {
 
       
-      if (accion.nombre) { // En caso de que cambiemos el nombre
-        pedidos[index].nombre = accion.nombre;
-      }
-
-      // Agregar productos
+       // Agregar productos
       if (accion.tipo.toLowerCase() === "agregar") {
 
       
@@ -268,31 +264,42 @@ app.put("/orders/:id", (req, res) => {
       // Reemplazar productos (sobreescribir)
       if (accion.tipo.toLowerCase() === "reemplazar") {
 
-        // Lo mismo 
-        if (!Array.isArray(accion.productos) || accion.productos.length === 0) {
-          return res.status(400).json({
-            message: "anda dormite"
-          });
+        
+
+        if (accion.nombre) { // En caso de que cambiemos el nombre
+           pedidos[index].nombre = accion.nombre;
+
         }
 
-        for (const p of accion.productos) {
-          let encontrado = productos.find(prod => prod.id === p);
 
-          if (!encontrado) {
-            return res.status(404).json({
-              message: "esa vuelta que no existe"
-            });
+
+        // Lo mismo 
+        if (accion.productos) {
+                
+          for (const p of accion.productos) {
+            let encontrado = productos.find(prod => prod.id === p);
+
+            if (!encontrado) {
+              return res.status(404).json({
+                message: "esa vuelta que no existe"
+              });
+            }
+
+            datosNuevos.push(encontrado);
+            totalNuevos += Number(encontrado.precio);
           }
 
-          datosNuevos.push(encontrado);
-          totalNuevos += Number(encontrado.precio);
+          pedidos[index].productos = datosNuevos;
+          pedidos[index].total = totalNuevos;
+
+          datosNuevos = [];
+          totalNuevos = 0;
+
+
+
         }
 
-        pedidos[index].productos = datosNuevos;
-        pedidos[index].total = totalNuevos;
 
-        datosNuevos = [];
-        totalNuevos = 0;
       }
 
     }

@@ -123,35 +123,100 @@ app.post("/orders", (req, res) => {
 app.put("/orders/:id", (req, res) => {
   const idActualizar = parseInt(req.params.id);
   const { acciones } = req.body;
+  const index = pedidos.findIndex(p => p.id === idActualizar); // Con esto pillo si el pedido si existe.
+
 
   try {
     
-    if (!acciones || !Array.isArray(acciones)) {
+    /// VALIDACIONES ///
+    if (!acciones || !Array.isArray(acciones)) { // Miro que acciones sea un array y que no este vacio
       return res.status(400).json({
         message: "Si no me dice bien qué hacer entonces qué hago ._."
       });
     }
 
-    const index = pedidos.findIndex(p => p.id === idActualizar);
 
-    if (index === -1) {
+    if (index === -1) { // Entonces en base al indice miro si existe o no
       return res.status(404).json({
         message: "Esa vuelta no existe"
       });
     }
+
+    
+
+
+    let tipos = [];
+    let cantidadPorTipo = {}; // Esto es un diccionario que almacena cosas como {"agregar": 1, "eliminar": 1}
+
+
+    for (const accion of acciones) {
+
+      // Como no puedo tener nada undefine tengo que hacer otra pequeña validacion.
+      if (!accion.tipo) {
+        return res.status(400).json({
+          message: "Mi niño, el 'tipo' es obligatorio."
+        });
+      }
+
+      const tipo = accion.tipo?.toLowerCase();
+      tipos.push(tipo);
+
+      cantidadPorTipo[tipo] = (cantidadPorTipo[tipo] || 0) + 1;
+
+    }
+
+    /// Solo existen las convinaciones de agregar y eliminar, o unicamente remplazar o agregar o eliminar
+    if (cantidadPorTipo["agregar"] && cantidadPorTipo["reemplazar"]) {
+      return res.status(400).json({
+        message: "No se puede 'agregar' y 'reemplazar' al mismo tiempo mi niño'."
+      });
+    }
+
+    if (cantidadPorTipo["eliminar"] && cantidadPorTipo["reemplazar"]) {
+      return res.status(400).json({
+      message: "no podes 'eliminar' y 'reemplazar' al mismo tiempo mi niño'."
+    });
+  }
+
+    for (const tipo in cantidadPorTipo) {
+      if (cantidadPorTipo[tipo] > 1) {  //// CON ESTA MISMA LOGICA DESPUES PUEDO PENSAR EN COMO contar cuantos prodcutos hay de un mismo tipo , por ejemplo saber si hay 2 empanadas de carne etc.
+        return res.status(400).json({
+          message: `Solo una accion por tipooo '${tipo}'.`
+        });
+      }
+    }
+
+    const nombres = acciones.filter(a => a.nombre);
+
+    if (nombres.length > 1) {
+      return res.status(400).json({
+          message: "Solo un nombre Perritooo"
+        });
+      }
+
+
+    ///// FIN VALIDACIONES ///
 
     let datosNuevos = [];
     let totalNuevos = 0;
 
     for (const accion of acciones) {
 
-      // Cambiar nombre
-      if (accion.nombre) {
+      
+      if (accion.nombre) { // En caso de que cambiemos el nombre
         pedidos[index].nombre = accion.nombre;
       }
 
       // Agregar productos
       if (accion.tipo.toLowerCase() === "agregar") {
+
+      
+        // Valido brevemente que 'productos' sea un array  y no me lo mande vacio 
+        if (!Array.isArray(accion.productos) || accion.productos.length === 0) {
+          return res.status(400).json({
+            message: "si me pasas productos al menos que contenga algo... guevon"
+          });
+        }
 
         for (const p of accion.productos) {
           let encontrado = productos.find(prod => prod.id === p);
@@ -169,15 +234,24 @@ app.put("/orders/:id", (req, res) => {
         pedidos[index].productos.push(...datosNuevos);
         pedidos[index].total += totalNuevos;
 
-        datosNuevos = [];
+        datosNuevos = []; // no me importa si no es elegante jajaja
         totalNuevos = 0;
       }
 
       // Eliminar productos
       if (accion.tipo.toLowerCase() === "eliminar") {
 
-        for (const p of accion.productos) {
+                // Valido brevemente que 'productos' sea un array  y no me lo mande vacio 
+        if (!Array.isArray(accion.productos) || accion.productos.length === 0) {
+          return res.status(400).json({
+            message: "si me pasas productos al menos que contenga algo... mamon"
+          });
+        }
 
+          /// ACABO DE DESCUBRIR UN BUG UnU  
+        //En caso de haber mas de un mismo producto en la orden con la misma id. los elimina todos, a causa del filter y desajusta el precio total, creo que manejar cantidades en los productos que van a la orden puede ayudarme a mejorar ese problema... pero no lo quiero pensar ahorita UnU estoy muy cansado... dejo esto para que no se me pase despues xd  /// aqui pensando mas creo que tambien unicamnete indexar mas hacer [splice]
+        for (const p of accion.productos) {
+        console.log("");
           let encontrado = pedidos[index].productos.find(prod => prod.id === p);
 
           if (!encontrado) {
@@ -193,6 +267,13 @@ app.put("/orders/:id", (req, res) => {
 
       // Reemplazar productos (sobreescribir)
       if (accion.tipo.toLowerCase() === "reemplazar") {
+
+        // Lo mismo 
+        if (!Array.isArray(accion.productos) || accion.productos.length === 0) {
+          return res.status(400).json({
+            message: "anda dormite"
+          });
+        }
 
         for (const p of accion.productos) {
           let encontrado = productos.find(prod => prod.id === p);
@@ -214,15 +295,17 @@ app.put("/orders/:id", (req, res) => {
         totalNuevos = 0;
       }
 
-    } // fin for acciones
+    }
 
-    return res.json({
+    // Si todo bien esto llega aqui y devuelve la orden actualizada
+
+    return res.status(200).json({
       message: "Orden actualizada correctamente",
       orden: pedidos[index]
     });
 
   } catch (error) {
-    console.error("Error actualizando orden :/ ", error);
+    console.error("Error actualizando orden :c ", error);
     return res.status(500).json({ message: "Error interno del servidor" });
   }
 
@@ -239,6 +322,7 @@ app.put("/orders/:id", (req, res) => {
 
 
 
+//// AQUI VA LA LOGICA DE DÉIVID para eliminar
 
 
 
@@ -248,11 +332,6 @@ app.put("/orders/:id", (req, res) => {
 
 
 
-
-
-  // Pensar en como trabajar con los datos nuevos.
-  // Toca coger los precios de los ids que el esta pasando en la actualizacion y sumarlos 
-  // para el nuevo precio total
 
      
 

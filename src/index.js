@@ -5,11 +5,11 @@ const PORT = 3000;
 app.use(express.json()); 
 
 const productos = [
-  { id: 'prod-101', nombre: 'Empanada de Carne', precio: 3.50 },
-  { id: 'prod-102', nombre: 'Arepa de Huevo', precio: 4.25 },
-  { id: 'prod-103', nombre: 'Salchipapa Clásica', precio: 9.80 },
-  { id: 'prod-104', nombre: 'Choriperro Especial', precio: 12.50 },
-  { id: 'prod-105', nombre: 'Aborrajado', precio: 6.00 }
+  { id: 'prod-101', nombreProducto: 'Empanada de Carne', precio: 3.50 },
+  { id: 'prod-102', nombreProducto: 'Arepa de Huevo', precio: 4.25 },
+  { id: 'prod-103', nombreProducto: 'Salchipapa Clásica', precio: 9.80 },
+  { id: 'prod-104', nombreProducto: 'Choriperro Especial', precio: 12.50 },
+  { id: 'prod-105', nombreProducto: 'Aborrajado', precio: 6.00 }
 ];
 
 

@@ -19,8 +19,6 @@ let pedidos = [
 ];
 
 
-
-
 app.get("/orders", (req, res) => {
   res.status(200).json({
     message: "Lista de pedidos",
@@ -67,14 +65,14 @@ app.post("/orders", (req, res) => {
    
     if (!nombre || !ids) {// si no me pasa los datos
       return res.status(400).json({
-        message: "Mi niño, el 'nombre' y los 'ids' son obligatorios.",
+        message: "Mi niño el 'nombre' y los 'ids' son obligatorios.",
       });
     }
 
 
     if (!Array.isArray(ids) || ids.length === 0) { // En caso de que no sea un array 
       return res.status(400).json({
-        message: "El campo 'id' tiene que ser un arreglo y por lo menos tener algo.",
+        message: "El campo 'id' tiene que ser una lista y por lo menos tener algo.",
       });
     }
 
@@ -88,7 +86,7 @@ app.post("/orders", (req, res) => {
 
       if (!encontrado) {
         return res.status(404).json({
-          message: `'${requestedId}?? que es eso???'.`,
+          message: `'${id}' ?? que es eso???'.`,
         });
       }
     
@@ -118,17 +116,15 @@ app.post("/orders", (req, res) => {
 });
 
 
-
-
 app.put("/orders/:id", (req, res) => {
-  const idActualizar = parseInt(req.params.id);
+  const id = parseInt(req.params.id);
   const { acciones } = req.body;
-  const index = pedidos.findIndex(p => p.id === idActualizar); // Con esto pillo si el pedido si existe.
+  const index = pedidos.findIndex(p => p.id === id); // Con esto pillo si el pedido si existe.
 
 
   try {
     
-    /// VALIDACIONES ///
+    /// VALIDACIONES ////
     if (!acciones || !Array.isArray(acciones)) { // Miro que acciones sea un array y que no este vacio
       return res.status(400).json({
         message: "Si no me dice bien qué hacer entonces qué hago ._."
@@ -158,7 +154,7 @@ app.put("/orders/:id", (req, res) => {
         });
       }
 
-      const tipo = accion.tipo?.toLowerCase();
+      const tipo = accion.tipo.toLowerCase();
       tipos.push(tipo);
 
       cantidadPorTipo[tipo] = (cantidadPorTipo[tipo] || 0) + 1;
@@ -210,7 +206,7 @@ app.put("/orders/:id", (req, res) => {
         // Valido brevemente que 'productos' sea un array  y no me lo mande vacio 
         if (!Array.isArray(accion.productos) || accion.productos.length === 0) {
           return res.status(400).json({
-            message: "si me pasas productos al menos que contenga algo... guevon"
+            message: "si me pasas productos al menos que contenga algo... pato"
           });
         }
 
@@ -271,11 +267,14 @@ app.put("/orders/:id", (req, res) => {
 
         }
 
+        
 
 
         // Lo mismo 
         if (accion.productos) {
-                
+          
+          datosNuevos = [];
+          totalNuevos = 0;
           for (const p of accion.productos) {
             let encontrado = productos.find(prod => prod.id === p);
 
@@ -285,8 +284,8 @@ app.put("/orders/:id", (req, res) => {
               });
             }
 
-            datosNuevos.push(encontrado);
             totalNuevos += Number(encontrado.precio);
+            datosNuevos.push(encontrado);
           }
 
           pedidos[index].productos = datosNuevos;
@@ -304,7 +303,7 @@ app.put("/orders/:id", (req, res) => {
 
     }
 
-    // Si todo bien esto llega aqui y devuelve la orden actualizada
+    // Que botadera de logica tan hdp a la final creo que deje una lista de tipos por nada xd.
 
     return res.status(200).json({
       message: "Orden actualizada correctamente",
@@ -331,21 +330,52 @@ app.put("/orders/:id", (req, res) => {
 
 //// AQUI VA LA LOGICA DE DÉIVID para eliminar
 
+// no la hizo entonce la hago yo.
+//
+
+app.delete("/orders/:id", (req, res) => {
+
+  const id = parseInt(req.params.id);
+
+  if (!id){
+    res.status(404).json({ message: "...? habla pues" })
+  } 
 
 
+  let elDifunto = pedidos.find(pedido => pedido.id === id)
 
+  if (!elDifunto){
+    res.status(404).json({message:"quesamonda"})
+  }
 
+  pedidos = pedidos.filter(pedido => pedido.id != id)
+  res.status(200).json({message:"ok"})
 
-
-
-
-
+})
      
 
 
 
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en el puerto ${PORT}`);
+  
+  function sum(arr) {
+  // Pense que en javascript existia sum como en python pero no 
+    // tuve que hacerla
+    let total = 0;
+    for (let num of arr) {
+      total += num;
+    }
+    return total;
+
+  }
+
+
+  let dos = 2 
+  let mas = 2 
+  let esigual = 4 
+  console.log(`hice esto por ocio jsjs bueno en fin... el resultado es {sum([dos, mas, esigual])} ... jeje ${sum([dos, mas, esigual])} ahora si. :D`)
+
 });
 
 
